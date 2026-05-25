@@ -3,7 +3,7 @@
  * Plugin Name: myBanner
  * Plugin URI: https://github.com/KantanPro/myBanner
  * Description: WordPress サイト向けのバナー広告表示プラグインです。
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: myBanner
  * License: GPL-2.0-or-later
  * Text Domain: my-banner
@@ -588,7 +588,22 @@ final class My_Banner_Plugin {
 
 		switch ( $field_key ) {
 			case 'enabled':
+				printf(
+					'<label><input type="checkbox" name="%1$s" value="1" %2$s /> %3$s</label>',
+					esc_attr( $name_attr ),
+					checked( 1, (int) $value, false ),
+					esc_html__( '有効', 'my-banner' )
+				);
+				break;
 			case 'display_front_page':
+				printf(
+					'<label><input type="checkbox" name="%1$s" value="1" %2$s /> %3$s</label>',
+					esc_attr( $name_attr ),
+					checked( 1, (int) $value, false ),
+					esc_html__( '有効', 'my-banner' )
+				);
+				echo '<p class="description">' . esc_html__( '有効にすると、サイトのトップページ（フロントページ）にバナーを自動表示します。ショートコード・ウィジェット・ブロックの配置は不要です。「有効化」がオンで、表示対象のバナーが登録されている場合のみ出力されます。表示位置は下の「自動表示位置」の設定に従います。', 'my-banner' ) . '</p>';
+				break;
 			case 'display_blog_index':
 				printf(
 					'<label><input type="checkbox" name="%1$s" value="1" %2$s /> %3$s</label>',
@@ -596,6 +611,7 @@ final class My_Banner_Plugin {
 					checked( 1, (int) $value, false ),
 					esc_html__( '有効', 'my-banner' )
 				);
+				echo '<p class="description">' . esc_html__( '有効にすると、ブログ投稿一覧ページ（投稿インデックス）にバナーを自動表示します。固定ページや個別の投稿・固定ページ記事には表示されません。「設定 > 表示設定」で「投稿ページ」を指定している場合はそのページが対象です。「有効化」がオンで、表示対象のバナーが登録されている場合のみ出力されます。表示位置は下の「自動表示位置」の設定に従います。', 'my-banner' ) . '</p>';
 				break;
 			case 'rotation_interval':
 				printf(
