@@ -75,6 +75,11 @@ myBanner/
 
 ## 変更履歴
 
+### 1.0.1
+
+- リリース ZIP 出力先を myBanner_TEST_UP に変更
+- GitHub Release（zipball フォールバック）向けのタグ付けリリース
+
 ### 1.0.0
 
 - ktp-banner をベースに KantanPro 依存機能を削除し、一般販売向け myBanner として初版リリース

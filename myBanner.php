@@ -3,7 +3,7 @@
  * Plugin Name: myBanner
  * Plugin URI: https://github.com/KantanPro/myBanner
  * Description: WordPress サイト向けのバナー広告表示プラグインです。
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: myBanner
  * License: GPL-2.0-or-later
  * Text Domain: my-banner

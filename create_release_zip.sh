@@ -5,7 +5,7 @@ set -euo pipefail
 PLUGIN_SLUG="myBanner"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="${SCRIPT_DIR}"
-OUTPUT_DIR="${HOME}/Desktop/myBanner_RELEASE"
+OUTPUT_DIR="/Users/kantanpro/Desktop/myBanner_TEST_UP"
 
 if [[ ! -f "${PLUGIN_DIR}/myBanner.php" ]]; then
   echo "Error: ${PLUGIN_DIR}/myBanner.php が見つかりません。"
