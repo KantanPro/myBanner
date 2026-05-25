@@ -3,7 +3,7 @@
  * Plugin Name: myBanner
  * Plugin URI: https://github.com/KantanPro/myBanner
  * Description: WordPress サイト向けのバナー広告表示プラグインです。
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: myBanner
  * License: GPL-2.0-or-later
  * Text Domain: my-banner
@@ -42,7 +42,7 @@ final class My_Banner_Plugin {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue_frontend_assets' ) );
-		add_action( 'init', array( $this, 'register_auto_display_hooks' ) );
+		add_action( 'admin_init', array( $this, 'maybe_cleanup_legacy_auto_display_options' ) );
 		add_action( 'init', array( $this, 'register_banner_block' ) );
 		add_action( 'widgets_init', array( $this, 'register_widget' ) );
 		add_filter( 'widget_display_callback', array( $this, 'prepare_widget_assets' ), 10, 3 );
@@ -67,11 +67,8 @@ final class My_Banner_Plugin {
 	 */
 	private static function get_default_options() {
 		return array(
-			'enabled'             => 1,
-			'display_front_page'  => 0,
-			'display_blog_index'  => 0,
-			'auto_display_hook'   => 'wp_footer',
-			'rotation_interval'   => 5,
+			'enabled'           => 1,
+			'rotation_interval' => 5,
 			'banners'            => array(
 				array(
 					'id'               => 'banner_default',
@@ -134,19 +131,36 @@ final class My_Banner_Plugin {
 			$options['rotation_interval'] = 5;
 		}
 
-		if ( ! isset( $options['auto_display_hook'] ) ) {
-			$options['auto_display_hook'] = 'wp_footer';
-		}
-		if ( ! isset( $options['display_front_page'] ) ) {
-			$options['display_front_page'] = 0;
-		}
-		if ( ! isset( $options['display_blog_index'] ) ) {
-			$options['display_blog_index'] = 0;
-		}
-
-		unset( $options['display_admin'], $options['display_hook'], $options['frontend_hook'] );
+		unset(
+			$options['display_admin'],
+			$options['display_hook'],
+			$options['frontend_hook'],
+			$options['display_front_page'],
+			$options['display_blog_index'],
+			$options['auto_display_hook']
+		);
 
 		update_option( self::OPTION_KEY, $options );
+	}
+
+	/**
+	 * 廃止した自動表示設定を DB から削除する。
+	 *
+	 * @return void
+	 */
+	public function maybe_cleanup_legacy_auto_display_options() {
+		if ( get_option( 'my_banner_removed_auto_display_v3' ) ) {
+			return;
+		}
+
+		$options = get_option( self::OPTION_KEY, array() );
+		if ( is_array( $options ) ) {
+			unset( $options['display_front_page'], $options['display_blog_index'], $options['auto_display_hook'] );
+			update_option( self::OPTION_KEY, $options );
+		}
+
+		delete_option( 'my_banner_auto_hook_migrated_v2' );
+		update_option( 'my_banner_removed_auto_display_v3', 1 );
 	}
 
 	/**
@@ -182,12 +196,9 @@ final class My_Banner_Plugin {
 		);
 
 		$fields = array(
-			'enabled'            => __( '有効化', 'my-banner' ),
-			'display_front_page' => __( 'フロントページで自動表示', 'my-banner' ),
-			'display_blog_index' => __( '投稿インデックスで自動表示', 'my-banner' ),
-			'auto_display_hook'  => __( '自動表示位置', 'my-banner' ),
-			'rotation_interval'  => __( 'ローテーション間隔（秒）', 'my-banner' ),
-			'banners'            => __( 'バナー一覧', 'my-banner' ),
+			'enabled'           => __( '有効化', 'my-banner' ),
+			'rotation_interval' => __( 'ローテーション間隔（秒）', 'my-banner' ),
+			'banners'           => __( 'バナー一覧', 'my-banner' ),
 		);
 
 		foreach ( $fields as $field_key => $label ) {
@@ -290,7 +301,7 @@ final class My_Banner_Plugin {
 			}
 		}
 
-		return $this->should_auto_display_on_current_page();
+		return false;
 	}
 
 	/**
@@ -505,19 +516,13 @@ final class My_Banner_Plugin {
 			return self::get_default_options();
 		}
 
-		$auto_hook_raw = isset( $input['auto_display_hook'] ) ? $input['auto_display_hook'] : 'wp_footer';
-		$auto_hook_ok  = in_array( $auto_hook_raw, array( 'wp_footer', 'wp_body_open' ), true ) ? $auto_hook_raw : 'wp_footer';
-
 		$rotation_interval = isset( $input['rotation_interval'] ) ? absint( $input['rotation_interval'] ) : 5;
 		$rotation_interval = max( 2, min( 60, $rotation_interval ) );
 
 		$output = array(
-			'enabled'            => empty( $input['enabled'] ) ? 0 : 1,
-			'display_front_page' => empty( $input['display_front_page'] ) ? 0 : 1,
-			'display_blog_index' => empty( $input['display_blog_index'] ) ? 0 : 1,
-			'auto_display_hook'  => $auto_hook_ok,
-			'rotation_interval'  => $rotation_interval,
-			'banners'            => array(),
+			'enabled'           => empty( $input['enabled'] ) ? 0 : 1,
+			'rotation_interval' => $rotation_interval,
+			'banners'           => array(),
 		);
 
 		$banners_input = isset( $input['banners'] ) && is_array( $input['banners'] ) ? $input['banners'] : array();
@@ -595,24 +600,6 @@ final class My_Banner_Plugin {
 					esc_html__( '有効', 'my-banner' )
 				);
 				break;
-			case 'display_front_page':
-				printf(
-					'<label><input type="checkbox" name="%1$s" value="1" %2$s /> %3$s</label>',
-					esc_attr( $name_attr ),
-					checked( 1, (int) $value, false ),
-					esc_html__( '有効', 'my-banner' )
-				);
-				echo '<p class="description">' . esc_html__( '有効にすると、サイトのトップページ（フロントページ）にバナーを自動表示します。ショートコード・ウィジェット・ブロックの配置は不要です。「有効化」がオンで、表示対象のバナーが登録されている場合のみ出力されます。表示位置は下の「自動表示位置」の設定に従います。', 'my-banner' ) . '</p>';
-				break;
-			case 'display_blog_index':
-				printf(
-					'<label><input type="checkbox" name="%1$s" value="1" %2$s /> %3$s</label>',
-					esc_attr( $name_attr ),
-					checked( 1, (int) $value, false ),
-					esc_html__( '有効', 'my-banner' )
-				);
-				echo '<p class="description">' . esc_html__( '有効にすると、ブログ投稿一覧ページ（投稿インデックス）にバナーを自動表示します。固定ページや個別の投稿・固定ページ記事には表示されません。「設定 > 表示設定」で「投稿ページ」を指定している場合はそのページが対象です。「有効化」がオンで、表示対象のバナーが登録されている場合のみ出力されます。表示位置は下の「自動表示位置」の設定に従います。', 'my-banner' ) . '</p>';
-				break;
 			case 'rotation_interval':
 				printf(
 					'<input type="number" class="small-text" min="2" max="60" step="1" name="%1$s" value="%2$d" /> %3$s',
@@ -624,23 +611,6 @@ final class My_Banner_Plugin {
 				break;
 			case 'banners':
 				$this->render_banners_field( $options );
-				break;
-			case 'auto_display_hook':
-				$choices = array(
-					'wp_footer'    => __( 'フッター直前（wp_footer）', 'my-banner' ),
-					'wp_body_open' => __( 'body 開始直後（wp_body_open・テーマ対応が必要）', 'my-banner' ),
-				);
-				echo '<select name="' . esc_attr( $name_attr ) . '" id="my-banner-auto-display-hook">';
-				foreach ( $choices as $val => $label ) {
-					printf(
-						'<option value="%1$s" %3$s>%2$s</option>',
-						esc_attr( $val ),
-						esc_html( $label ),
-						selected( $value, $val, false )
-					);
-				}
-				echo '</select>';
-				echo '<p class="description">' . esc_html__( 'フロントページまたは投稿インデックスで自動表示する場合の出力位置です。', 'my-banner' ) . '</p>';
 				break;
 			default:
 				printf(
@@ -795,6 +765,13 @@ final class My_Banner_Plugin {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
+
+		$options = $this->get_options();
+		if ( empty( $this->get_active_banners( $options ) ) ) {
+			echo '<div class="notice notice-error"><p>';
+			echo esc_html__( 'バナー画像 URL が未登録のため、どのページにも表示されません。「バナー一覧」で画像を選択して保存してください。', 'my-banner' );
+			echo '</p></div>';
+		}
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'myBanner 設定', 'my-banner' ); ?></h1>
@@ -809,8 +786,7 @@ final class My_Banner_Plugin {
 			<h2><?php echo esc_html__( '利用方法', 'my-banner' ); ?></h2>
 			<p><?php echo esc_html__( 'ブロックエディター: 「+」→「myBanner」ブロックを本文の任意位置に追加', 'my-banner' ); ?></p>
 			<p><?php echo esc_html__( 'ショートコード: [my_banner]', 'my-banner' ); ?></p>
-			<p><?php echo esc_html__( 'ウィジェット: 外観 > ウィジェット から「myBanner」を追加', 'my-banner' ); ?></p>
-			<p><?php echo esc_html__( '自動表示: フロントページまたは投稿インデックス（設定でオンにした場合）', 'my-banner' ); ?></p>
+			<p><?php echo esc_html__( 'ウィジェット: 外観 > ウィジェット から「myBanner」を追加（インデックス上下・サイドバー等）', 'my-banner' ); ?></p>
 		</div>
 		<?php
 	}
@@ -926,62 +902,6 @@ final class My_Banner_Plugin {
 			),
 			$html
 		);
-	}
-
-	/**
-	 * フロントページ・投稿インデックス向けの自動表示フックを登録する。
-	 *
-	 * @return void
-	 */
-	public function register_auto_display_hooks() {
-		static $registered = false;
-		if ( $registered ) {
-			return;
-		}
-
-		$options   = $this->get_options();
-		$hook_name = isset( $options['auto_display_hook'] ) ? $options['auto_display_hook'] : 'wp_footer';
-		if ( ! in_array( $hook_name, array( 'wp_footer', 'wp_body_open' ), true ) ) {
-			return;
-		}
-
-		add_action( $hook_name, array( $this, 'maybe_render_auto_display_banner' ), 5 );
-		$registered = true;
-	}
-
-	/**
-	 * 設定に応じてフロントページまたは投稿インデックスへバナーを出力する。
-	 *
-	 * @return void
-	 */
-	public function maybe_render_auto_display_banner() {
-		if ( is_admin() || ! $this->should_auto_display_on_current_page() ) {
-			return;
-		}
-
-		echo $this->get_banner_html( 'my-banner-auto' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- kses_banner_html 済み
-	}
-
-	/**
-	 * 現在のページで自動表示すべきか判定する。
-	 *
-	 * @return bool
-	 */
-	private function should_auto_display_on_current_page() {
-		$options = $this->get_options();
-		if ( empty( $options['enabled'] ) || empty( $this->get_active_banners( $options ) ) ) {
-			return false;
-		}
-
-		if ( ! empty( $options['display_front_page'] ) && is_front_page() ) {
-			return true;
-		}
-
-		if ( ! empty( $options['display_blog_index'] ) && is_home() ) {
-			return true;
-		}
-
-		return false;
 	}
 
 	/**

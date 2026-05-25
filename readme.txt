@@ -4,7 +4,7 @@ Tags: banner, advertisement, widget, shortcode, block
 Requires at least: 5.8
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,7 +16,6 @@ myBanner は、WordPress サイトにバナー広告を表示するための汎�
 
 * 複数バナーの登録とローテーション表示
 * PC・スマホ用画像の切り替え（767px 以下）
-* フロントページ・投稿インデックスへの自動表示（任意）
 * ショートコード `[my_banner]`
 * ウィジェット「myBanner」
 * Gutenberg ブロック「myBanner」
@@ -34,10 +33,13 @@ myBanner は、WordPress サイトにバナー広告を表示するための汎�
 * myBanner が有効化されている
 * 「有効化」にチェックが入っている
 * バナー画像 URL が登録されている
-* 自動表示を使う場合は「フロントページで自動表示」または「投稿インデックスで自動表示」をオンにする
-* 固定ページ等に表示する場合は `[my_banner]` ショートコード、ウィジェット、またはブロックを配置する
+* ウィジェット・ショートコード `[my_banner]`・Gutenberg ブロックのいずれかで表示場所を配置している
 
 == Changelog ==
+
+= 1.0.3 =
+* フロントページ・投稿インデックスへの自動表示機能を廃止（ウィジェットで代替）
+* 自動表示位置の設定を廃止
 
 = 1.0.2 =
 * 「フロントページで自動表示」「投稿インデックスで自動表示」に有効時の動作説明を追加
@@ -48,5 +50,4 @@ myBanner は、WordPress サイトにバナー広告を表示するための汎�
 
 = 1.0.0 =
 * ktp-banner をベースに KantanPro 依存機能を削除し、一般販売向け myBanner として初版リリース
-* フロントページ・投稿インデックスへの自動表示設定を追加
 * ウィジェット・ショートコード `[my_banner]`・Gutenberg ブロックに対応
