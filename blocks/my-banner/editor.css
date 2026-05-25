@@ -1,0 +1,12 @@
+.my-banner-block-editor .components-placeholder {
+	min-height: 120px;
+}
+
+.my-banner-block-editor .components-placeholder__fieldset {
+	width: 100%;
+}
+
+.my-banner-block-editor .my-banner,
+.my-banner-block-editor .my-banner-rotator {
+	max-width: 100%;
+}

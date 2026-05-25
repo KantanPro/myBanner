@@ -1,0 +1,64 @@
+.widget_my_banner .my-banner,
+.widget_my_banner .my-banner-rotator,
+.widget_my_banner .my-banner-media img,
+.widget_my_banner .my-banner img,
+.my-banner-media img,
+.my-banner img {
+	width: 100%;
+	max-width: 100%;
+	height: auto;
+	display: block;
+}
+
+.my-banner-media--desktop {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+}
+
+.my-banner-media--mobile {
+	display: none;
+	width: 100%;
+	max-width: 100%;
+}
+
+@media (max-width: 767px) {
+	.my-banner-media--desktop {
+		display: none !important;
+	}
+
+	.my-banner-media--mobile {
+		display: block !important;
+	}
+}
+
+.my-banner-rotator {
+	position: relative;
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+.my-banner-rotator-item {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+	transition: opacity 0.5s ease;
+}
+
+.my-banner-rotator-item:not(.is-active) {
+	position: absolute;
+	top: 0;
+	left: 0;
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+.my-banner-rotator-item.is-active {
+	position: relative;
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
+}
